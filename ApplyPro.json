@@ -1,0 +1,702 @@
+{
+  "name": "ApplyPro",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -112,
+        0
+      ],
+      "id": "6acd264f-a8c1-4025-b92f-1ab084526aee",
+      "name": "Daily Schedule"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 10,
+        "simple": false,
+        "filters": {
+          "q": "from:Indeed category:updates is:unread newer_than:2d"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        112,
+        0
+      ],
+      "id": "5dd8dd16-a2d1-4ab5-8d29-1d9876320505",
+      "name": "Fetch Unread Emails",
+      "webhookId": "e359491b-8d94-476b-8c3d-9daf50bf7ae8",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "XeHEoYCFoQutdUnf",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "dataPropertyName": "html",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "link",
+              "cssSelector": "a",
+              "returnValue": "attribute",
+              "attribute": "href",
+              "returnArray": true
+            },
+            {
+              "key": "jobTitle",
+              "cssSelector": "a",
+              "returnArray": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "62d37ee6-d8bb-4a4f-b5f0-9326fe19d6b3",
+      "name": "Extract Links & Titles"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "link, jobTitle",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        672,
+        0
+      ],
+      "id": "4ffe9ac3-b034-461d-846e-3adf808eb5f7",
+      "name": "Explode to Items"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "aa664fcc-dc57-4250-97a9-0cb0b2da064d",
+              "leftValue": "={{ $json.jobTitle }}",
+              "rightValue": "junior automation",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "eda36d5c-610f-4e77-a7e8-9e0babb362c0",
+              "leftValue": "={{ $json.jobTitle }}",
+              "rightValue": "automation",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "6e19b292-27df-4db4-a9d4-f3407af3058d",
+              "leftValue": "={{ $json.jobTitle }}",
+              "rightValue": "n8n",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "60e3d610-8d3b-455a-9fa1-f47bd80b0053",
+              "leftValue": "={{ $json.jobTitle }}",
+              "rightValue": "junior",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "5aedd3b2-b23d-4583-b515-91cc6c22c0a4",
+              "leftValue": "={{ $json.jobTitle }}",
+              "rightValue": "/\\bAI\\b/i",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        944,
+        0
+      ],
+      "id": "38a38091-ed09-4336-9934-0c7930132d46",
+      "name": "Filter: Keywords"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d45fe13b-61de-4f9c-bfad-9d4f078f0dce",
+              "leftValue": "={{ $json.jobTitle }}",
+              "rightValue": "[",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            },
+            {
+              "id": "76b54cc2-f5a3-4780-9931-5b999172326d",
+              "leftValue": "={{ $json.jobTitle }}",
+              "rightValue": "]",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            },
+            {
+              "id": "81bad292-8b7e-4a45-8201-80223761da2a",
+              "leftValue": "={{ $json.jobTitle }}",
+              "rightValue": "Indeed",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            },
+            {
+              "id": "df12a65d-8a7b-4c4d-a769-c635e6b0114a",
+              "leftValue": "={{ $json.link }}",
+              "rightValue": "subscriptions.indeed",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1184,
+        0
+      ],
+      "id": "e698a02b-fe82-4ae6-8fc7-9b092a56998c",
+      "name": "Filter: Cleanup"
+    },
+    {
+      "parameters": {
+        "content": "## 📥 Ingestion Layer\nChecks Gmail for new 'Indeed Job Alert' emails from the last 2 days. ",
+        "height": 288,
+        "width": 544
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -208,
+        -128
+      ],
+      "id": "bada4f2c-991a-4ec0-a667-a2d0127aba14",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## ⚙️ Data Processing \nExtracts all links from the email body and splits them into individual job items to process.",
+        "height": 288,
+        "width": 480,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        384,
+        -128
+      ],
+      "id": "2d4656c8-be10-4fa1-91c9-384bac9efe3d",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## 🛡️ Filtering Pipeline\nTwo-stage filter: First checks for relevant topics (AI/Auto), then removes broken links and junk data.",
+        "height": 288,
+        "width": 432,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        912,
+        -128
+      ],
+      "id": "a58f9cba-7d9d-46be-8fa4-c8ad43eb64de",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {
+          "textFormat": {
+            "textOptions": {
+              "type": "json_object"
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1792,
+        160
+      ],
+      "id": "213b13c8-ae56-432b-9085-0d97e47665fb",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "j5tLsRwI1XKQ15wo",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ddbfcc7b-2abc-4255-b5cd-a0bcc76099a8",
+              "name": "resume",
+              "value": "[USER RESUME GOES HERE - PASTE YOUR TEXT TO CONFIGURE]",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1488,
+        0
+      ],
+      "id": "ffd564a9-590a-4826-b508-f791a6dd5a3c",
+      "name": "Set Resume Context"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a career strategist helping a Junior AI Engineer student in the Philippines.\nHere is the user's resume:\n{{ $json.resume }}\n\nAnalyze the following Job Title: \"{{ $json.jobTitle }}\"\n\nTask:\n1. Give a Relevance Score (0-10).\n2. Give a 1-sentence reason why.\n3. CRITICAL: IF (and ONLY IF) the score is 7 or higher, write a short, punchy cover letter tailored to this job using the resume. If the score is lower than 7, leave the letter blank.\n\nReturn your answer in strictly valid JSON format like this:\n{\n  \"score\": number,\n  \"reason\": \"text\",\n  \"cover_letter\": \"text or empty string\"\n}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1712,
+        0
+      ],
+      "id": "8f625591-f34d-45f8-9ebe-4e2b632abe91",
+      "name": "AI Career Coach"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1wktL9g5lg57P0WTa9t7XjtZBhXmkswT9uauFn8EcUNY",
+          "mode": "list",
+          "cachedResultName": "Agentic Job Search",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wktL9g5lg57P0WTa9t7XjtZBhXmkswT9uauFn8EcUNY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wktL9g5lg57P0WTa9t7XjtZBhXmkswT9uauFn8EcUNY/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Link": "={{ $('Set Resume Context').item.json.link }}",
+            "Job Title": "={{ $('Set Resume Context').item.json.jobTitle }}",
+            "Date Found": "={{ $now.toFormat('yyyy-MM-dd') }}",
+            "Status": "New",
+            "Source": "Indeed Email",
+            "AI Score": "={{ JSON.parse($json.text).score }}",
+            "AI Reason": "={{ JSON.parse($json.text).reason }}",
+            "Cover Letter": "={{ JSON.parse($json.text).cover_letter }}"
+          },
+          "matchingColumns": [
+            "Link"
+          ],
+          "schema": [
+            {
+              "id": "Job Title",
+              "displayName": "Job Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Link",
+              "displayName": "Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Date Found",
+              "displayName": "Date Found",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Source",
+              "displayName": "Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "AI Score",
+              "displayName": "AI Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "AI Reason",
+              "displayName": "AI Reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Cover Letter",
+              "displayName": "Cover Letter",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2064,
+        0
+      ],
+      "id": "0bf0168f-ea16-4560-9889-61fe03bd1348",
+      "name": "Update Database",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "SVup5TpHbFuZ6Rne",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5aa4cbf4-b639-469f-b7d0-f25104bc030d",
+              "leftValue": "={{ $json['AI Score'] }}",
+              "rightValue": 7,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2272,
+        0
+      ],
+      "id": "12e2fd81-6c79-47e1-98b3-cb6b3c9442e0",
+      "name": "Filter: High Value?"
+    },
+    {
+      "parameters": {
+        "chatId": "7190945169",
+        "text": "=🚀 <b>New High-Value Job Found!</b>\n\n<b>Role:</b> {{ $('Set Resume Context').item.json.jobTitle }}\n<b>Score:</b> {{ $json[\"AI Score\"] }}/10\n<b>Reason:</b> {{ $json[\"AI Reason\"] }}\n\n🔗 <a href=\"{{ $('Set Resume Context').item.json.link }}\">Apply Here</a>",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2512,
+        -16
+      ],
+      "id": "ed44d88e-1981-46e0-bf29-12e26c9f388f",
+      "name": "Alert: Telegram",
+      "webhookId": "f486e7ea-6fc6-4083-b910-50a0cd018026",
+      "credentials": {
+        "telegramApi": {
+          "id": "WspfKQWT1HFYQS4H",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## The Intelligence Layer\nAnalyses the job title against the user's resume to assign a relevance score (1-10) and generate a cover letter.",
+        "height": 432,
+        "width": 560,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1424,
+        -128
+      ],
+      "id": "be1b5a5f-1331-42ed-8850-f91f8f8ca2e0",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## Storage & Notifications\nUpserts the job into Google Sheets to prevent duplicates. If the AI Score is 7+, triggers a real-time Telegram alert.",
+        "height": 288,
+        "width": 640,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2032,
+        -128
+      ],
+      "id": "218bb8b0-e346-48dc-9745-1eb5f2811d07",
+      "name": "Sticky Note4"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Daily Schedule": {
+      "main": [
+        [
+          {
+            "node": "Fetch Unread Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Unread Emails": {
+      "main": [
+        [
+          {
+            "node": "Extract Links & Titles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Links & Titles": {
+      "main": [
+        [
+          {
+            "node": "Explode to Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Explode to Items": {
+      "main": [
+        [
+          {
+            "node": "Filter: Keywords",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter: Keywords": {
+      "main": [
+        [
+          {
+            "node": "Filter: Cleanup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter: Cleanup": {
+      "main": [
+        [
+          {
+            "node": "Set Resume Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Career Coach",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Resume Context": {
+      "main": [
+        [
+          {
+            "node": "AI Career Coach",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Career Coach": {
+      "main": [
+        [
+          {
+            "node": "Update Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Database": {
+      "main": [
+        [
+          {
+            "node": "Filter: High Value?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter: High Value?": {
+      "main": [
+        [
+          {
+            "node": "Alert: Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Manila",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "2b631675-e5a4-44c9-8745-49172fbb886e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "116d1d4e382ebada1154bb41c5726ee479acff2203d0608900bed281c28589b3"
+  },
+  "id": "u1fqc5DGbrXgfA9K-yT5O",
+  "tags": []
+}
