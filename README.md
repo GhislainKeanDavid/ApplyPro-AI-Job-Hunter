@@ -27,7 +27,7 @@ An intelligent automation agent that manages the entire job application pipeline
 * **Scalable:** Capable of processing 100+ job alerts per minute.
 
 ## 🔧 How to Run
-1.  Download `ai_job_agent.json` from this repo.
+1.  Download `ApplyPro.json` from this repo.
 2.  Import into n8n.
 3.  Configure Credentials (OpenAI, Google, Telegram).
 4.  Update the "Set Resume" node with your own profile.
